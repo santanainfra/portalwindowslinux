@@ -1,0 +1,1346 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Windows e Linux - Administração de Sistemas</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome para ícones auxiliares -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Inter e Fira Code -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['Fira Code', 'monospace'],
+                    },
+                    colors: {
+                        winBlue: '#0078D4',
+                        winDark: '#0f172a',
+                        tuxYellow: '#E5A93C',
+                        tuxDark: '#18181b',
+                        terminalGreen: '#4af626',
+                    },
+                    animation: {
+                        'marquee': 'marquee 22s linear infinite',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        marquee: {
+                            '0%': { transform: 'translateX(100%)' },
+                            '100%': { transform: 'translateX(-100%)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom Scrollbar for Terminal and Code Views */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        /* Continuous marquee effect */
+        .marquee-container {
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        .marquee-content {
+            display: inline-block;
+            animation: marquee 25s linear infinite;
+        }
+        .marquee-container:hover .marquee-content {
+            animation-play-state: paused;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col justify-between selection:bg-cyan-500 selection:text-slate-900">
+
+    <!-- TOP HEADER -->
+    <header class="sticky top-0 z-40 glass-panel border-b border-slate-800/80 shadow-2xl">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                
+                <!-- Logo & Title (Funciona como botão 'Home') -->
+                <div onclick="goHome()" class="flex items-center space-x-4 cursor-pointer group selection:bg-none" title="Voltar para a Tela Inicial">
+                    <div class="flex items-center space-x-2 bg-slate-900/80 p-2 rounded-xl border border-slate-700/60 shadow-inner group-hover:border-cyan-500/50 transition-all">
+                        <!-- Windows Logo SVG -->
+                        <svg class="w-8 h-8 text-blue-500 drop-shadow-[0_0_8px_rgba(0,120,212,0.6)] group-hover:scale-105 transition-transform" viewBox="0 0 88 88" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path fill="#0078D4" d="M0 0h42v42H0zM46 0h42v42H46zM0 46h42v42H0zM46 46h42v42H46z"/>
+                        </svg>
+                        <span class="text-slate-500 font-light text-xl">/</span>
+                        <!-- Tux SVG Logo -->
+                        <svg class="w-8 h-8 drop-shadow-[0_0_8px_rgba(229,169,60,0.5)] group-hover:scale-105 transition-transform" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <ellipse cx="32" cy="38" rx="18" ry="20" fill="#27272a"/>
+                            <ellipse cx="32" cy="40" rx="12" ry="15" fill="#f8fafc"/>
+                            <circle cx="32" cy="18" r="12" fill="#27272a"/>
+                            <circle cx="28" cy="16" r="3.5" fill="#ffffff"/>
+                            <circle cx="36" cy="16" r="3.5" fill="#ffffff"/>
+                            <circle cx="28.5" cy="16" r="1.8" fill="#09090b"/>
+                            <circle cx="35.5" cy="16" r="1.8" fill="#09090b"/>
+                            <path d="M26 21 Q32 27 38 21 Q32 24 26 21 Z" fill="#f59e0b"/>
+                            <ellipse cx="22" cy="56" rx="7" ry="3" fill="#f59e0b"/>
+                            <ellipse cx="42" cy="56" rx="7" ry="3" fill="#f59e0b"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-sky-300 to-amber-400 group-hover:brightness-125 transition-all">
+                            Portal Windows e Linux
+                        </h1>
+                        <p class="text-xs text-slate-400 hidden sm:block">Guia Interativo de Administração de Sistemas CLI</p>
+                    </div>
+                </div>
+
+                <!-- OS Switcher Tabs -->
+                <div class="flex bg-slate-900/90 p-1.5 rounded-xl border border-slate-800">
+                    <button id="btn-win" onclick="switchOS('windows')" class="os-tab-btn flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 bg-blue-600 text-white shadow-lg shadow-blue-600/30">
+                        <i class="fab fa-windows text-lg"></i>
+                        <span class="hidden sm:inline">Windows (CMD/PS)</span>
+                        <span class="sm:hidden">Windows</span>
+                    </button>
+                    <button id="btn-lin" onclick="switchOS('linux')" class="os-tab-btn flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 text-slate-400 hover:text-white hover:bg-slate-800">
+                        <i class="fab fa-linux text-lg"></i>
+                        <span class="hidden sm:inline">Linux (Bash/Shell)</span>
+                        <span class="sm:hidden">Linux</span>
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTAINER -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow w-full">
+        
+        <!-- TOP CONTROLS & FILTERING -->
+        <div class="glass-panel p-5 rounded-2xl mb-8 shadow-xl border border-slate-800">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                
+                <!-- Search Bar -->
+                <div class="relative flex-grow max-w-xl">
+                    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <input type="text" id="searchInput" oninput="filterCommands()" placeholder="Buscar comandos, descrições ou utilitários..." 
+                        class="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl pl-11 pr-4 py-3 text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all">
+                    <button onclick="clearSearch()" id="btnClearSearch" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white">
+                        <i class="fas fa-times-circle"></i>
+                    </button>
+                </div>
+
+                <!-- Level Filters -->
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider mr-1">Nível:</span>
+                    <button onclick="filterLevel('all')" class="lvl-btn px-3 py-1.5 rounded-lg text-xs font-medium border border-cyan-500/40 bg-cyan-500/20 text-cyan-300 transition-all shadow-sm" data-level="all">Todos</button>
+                    <button onclick="filterLevel('Básico')" class="lvl-btn px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-700 bg-slate-900 text-slate-400 hover:text-slate-200 transition-all" data-level="Básico">Básico</button>
+                    <button onclick="filterLevel('Intermediário')" class="lvl-btn px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-700 bg-slate-900 text-slate-400 hover:text-slate-200 transition-all" data-level="Intermediário">Intermediário</button>
+                    <button onclick="filterLevel('Avançado')" class="lvl-btn px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-700 bg-slate-900 text-slate-400 hover:text-slate-200 transition-all" data-level="Avançado">Avançado</button>
+                </div>
+
+            </div>
+
+            <!-- Category Tags Filter -->
+            <div class="mt-4 pt-4 border-t border-slate-800/80 flex flex-wrap gap-2 items-center" id="tagContainer">
+                <!-- Dynamic Tag Badges will be generated here -->
+            </div>
+        </div>
+
+        <!-- MAIN LAYOUT GRID (COMMAND LIST + LIVE SIMULATOR) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <!-- LEFT / CENTER: COMMAND CARDS LIST (8 COLS) -->
+            <div class="lg:col-span-7 xl:col-span-7 space-y-4">
+                
+                <!-- OS Info Banner -->
+                <div id="os-banner" class="p-4 rounded-xl border flex items-center justify-between transition-all bg-blue-950/40 border-blue-800/50">
+                    <div class="flex items-center space-x-3">
+                        <div id="os-icon-box" class="w-10 h-10 rounded-lg flex items-center justify-center bg-blue-600/20 text-blue-400 text-xl">
+                            <i class="fab fa-windows"></i>
+                        </div>
+                        <div>
+                            <h2 id="os-title" class="font-bold text-slate-100">Administração Windows (CMD & PowerShell)</h2>
+                            <p id="os-subtitle" class="text-xs text-slate-400">Exibindo comandos essenciais para gerenciamento de servidores e estações Windows.</p>
+                        </div>
+                    </div>
+                    <span id="command-count" class="text-xs font-mono bg-slate-900 border border-slate-700 px-3 py-1 rounded-full text-slate-300">
+                        0 Comandos
+                    </span>
+                </div>
+
+                <!-- Commands Container -->
+                <div id="commandList" class="space-y-4">
+                    <!-- Dynamic Command Cards Insertion -->
+                </div>
+
+                <!-- No Results State -->
+                <div id="noResults" class="hidden text-center py-16 glass-panel rounded-2xl">
+                    <i class="fas fa-terminal text-5xl text-slate-600 mb-4"></i>
+                    <h3 class="text-lg font-bold text-slate-300">Nenhum comando encontrado</h3>
+                    <p class="text-sm text-slate-500 mt-1">Tente ajustar seus termos de pesquisa ou filtros selecionados.</p>
+                    <button onclick="resetFilters()" class="mt-4 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-xs font-semibold rounded-lg text-cyan-400 border border-slate-600 transition-all">
+                        Restaurar Filtros
+                    </button>
+                </div>
+
+            </div>
+
+            <!-- RIGHT: INTERACTIVE TERMINAL SIMULATOR (5 COLS - STICKY) -->
+            <div class="lg:col-span-5 xl:col-span-5">
+                <div class="sticky top-28 space-y-4">
+                    
+                    <!-- Terminal Header Box -->
+                    <div class="rounded-t-xl bg-slate-900 border border-slate-800 p-3 flex items-center justify-between shadow-2xl">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-3 h-3 rounded-full bg-red-500/80"></div>
+                            <div class="w-3 h-3 rounded-full bg-yellow-500/80"></div>
+                            <div class="w-3 h-3 rounded-full bg-green-500/80"></div>
+                            <span id="terminal-title" class="text-xs font-mono text-slate-400 ml-2 flex items-center gap-1.5">
+                                <i class="fas fa-terminal text-slate-500"></i> Windows PowerShell Simulator
+                            </span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="clearTerminal()" title="Limpar Terminal" class="text-xs text-slate-400 hover:text-white px-2 py-1 rounded bg-slate-800 border border-slate-700 transition-all">
+                                <i class="fas fa-eraser mr-1"></i> Limpar
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Terminal Output Screen -->
+                    <div id="terminal-screen" class="bg-slate-950 border-x border-b border-slate-800 rounded-b-xl p-4 font-mono text-xs text-slate-200 h-[480px] overflow-y-auto space-y-3 shadow-2xl relative">
+                        <!-- Default Welcome Banner in Console -->
+                        <div class="text-slate-400 leading-relaxed border-b border-slate-800/80 pb-3">
+                            <p class="text-cyan-400 font-bold">Portal CLI Console v2.4 [Sistema Interativo]</p>
+                            <p class="text-slate-500">Selecione qualquer comando na lista ao lado e clique em <span class="text-emerald-400 font-semibold">"Executar / Testar"</span> para simular o resultado no terminal.</p>
+                        </div>
+
+                        <!-- Logs will append here -->
+                        <div id="terminal-logs" class="space-y-3"></div>
+                    </div>
+
+                    <!-- Quick Helper Tip Card -->
+                    <div class="glass-panel p-4 rounded-xl text-xs border border-slate-800 flex items-start space-x-3 text-slate-400">
+                        <i class="fas fa-lightbulb text-amber-400 text-lg mt-0.5"></i>
+                        <div>
+                            <span class="font-bold text-slate-200">Dica de Produtividade:</span>
+                            <p class="mt-0.5">Você pode copiar a sintaxe completa diretamente para a área de transferência com um único clique no botão de cópia <i class="far fa-copy text-slate-300"></i> em cada card.</p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- FOOTER WITH MOVING MARQUEE -->
+    <footer class="bg-slate-950 border-t border-slate-800 text-slate-400 relative z-30 shadow-2xl">
+        <div class="bg-slate-900/90 py-2.5 border-b border-slate-800/60 overflow-hidden">
+            <div class="marquee-container">
+                <div class="marquee-content flex items-center space-x-8 text-sm font-semibold tracking-wide text-cyan-400">
+                    <span class="flex items-center gap-2">
+                        <i class="fas fa-certificate text-amber-400"></i>
+                        Desenvolvido pelo Analista Flávio Santana ® - Marca Registrada.
+                    </span>
+                    <span class="text-slate-600">•</span>
+                    <span class="flex items-center gap-2 text-slate-300">
+                        <i class="fas fa-server text-blue-400"></i> Portal de Administração de Sistemas Windows & Linux
+                    </span>
+                    <span class="text-slate-600">•</span>
+                    <span class="flex items-center gap-2">
+                        <i class="fas fa-certificate text-amber-400"></i>
+                        Desenvolvido pelo Analista Flávio Santana ® - Marca Registrada.
+                    </span>
+                    <span class="text-slate-600">•</span>
+                    <span class="flex items-center gap-2 text-slate-300">
+                        <i class="fas fa-code-branch text-emerald-400"></i> Referência CLI Profissional
+                    </span>
+                    <span class="text-slate-600">•</span>
+                    <span class="flex items-center gap-2">
+                        <i class="fas fa-certificate text-amber-400"></i>
+                        Desenvolvido pelo Analista Flávio Santana ® - Marca Registrada.
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500">
+            <p>© <span id="year"></span> Portal Windows e Linux. Todos os direitos reservados.</p>
+            <p class="mt-2 sm:mt-0 font-mono">Analista Flávio Santana ®</p>
+        </div>
+    </footer>
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toast" class="fixed bottom-12 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none flex items-center space-x-3 bg-slate-900 border border-cyan-500/50 text-cyan-300 px-4 py-3 rounded-xl shadow-2xl">
+        <i class="fas fa-check-circle text-emerald-400 text-lg"></i>
+        <span id="toast-message" class="text-xs font-semibold">Comando copiado com sucesso!</span>
+    </div>
+
+    <!-- APPLICATION LOGIC & DATA -->
+    <script>
+        // Data Store for Commands (Expanded & Universal Library)
+        const commandDatabase = {
+            windows: [
+                {
+                    id: "w_dir",
+                    command: "Get-ChildItem -Path C:\\ -Recurse -Depth 1",
+                    title: "Listar Arquivos e Diretórios (ls / dir)",
+                    level: "Básico",
+                    category: "#Arquivos",
+                    description: "Exibe os arquivos e subpastas do diretório especificado. No PowerShell, substitui o tradicional 'dir' com parâmetros avançados de busca.",
+                    syntax: "Get-ChildItem [[-Path] <String>] [-Recurse] [-Depth <Int32>]",
+                    example: "Get-ChildItem C:\\Users -Hidden",
+                    outputSim: `    Diretório: C:\\\n\nMode font-mono          LastWriteTime         Length Name\n----                    -------------         ------ ----\nd-----           10/11/2026     14:30                Program Files\nd-----           10/11/2026     14:30                Program Files (x86)\nd-r---           10/11/2026     15:00                Users\nd-----           11/11/2026     09:12                Windows\n-a----           08/11/2026     22:15           1024 dump.log`
+                },
+                {
+                    id: "w1",
+                    command: "ipconfig /all",
+                    title: "Detalhes de Configuração de Rede",
+                    level: "Básico",
+                    category: "#Rede",
+                    description: "Exibe todas as informações atuais de configuração da rede TCP/IP, incluindo endereço IP, MAC (Físico), Máscara de Sub-rede, Gateway e Servidores DNS.",
+                    syntax: "ipconfig [/all | /renew | /release | /flushdns]",
+                    example: "ipconfig /flushdns",
+                    outputSim: `Configuração de IP do Windows\n\nNome do host . . . . . . . . . . . . : SRV-WIN-PROD01\nSufixo DNS primário . . . . . . . . . : corp.local\n\nAdaptador de Rede Ethernet Ethernet0:\n   Endereço IPv4. . . . . . . . . . . : 192.168.1.150(Preferencial)\nMáscara de Sub-rede . . . . . . . . . : 255.255.255.0\nGateway Padrão . . . . . . . . . . . : 192.168.1.1\nServidores DNS . . . . . . . . . . . : 8.8.8.8, 1.1.1.1\nEndereço Físico (MAC) . . . . . . . . : 00-15-5D-01-A4-2C`
+                },
+                {
+                    id: "w_ping",
+                    command: "Test-Connection -ComputerName google.com -Count 4",
+                    title: "Testar Conectividade ICMP (Ping)",
+                    level: "Básico",
+                    category: "#Rede",
+                    description: "Envia pacotes de eco ICMP para verificar a acessibilidade e latência de um host remoto.",
+                    syntax: "Test-Connection [-ComputerName] <String[]> [-Count <Int32>]",
+                    example: "Test-Connection -ComputerName 1.1.1.1",
+                    outputSim: `Source        Destination     IPV4Address      IPV6Address      Bytes  Time(ms)\n------        -----------     -----------      -----------      -----  --------\nSRV-WIN-PROD  google.com      142.250.217.206                  32     12\nSRV-WIN-PROD  google.com      142.250.217.206                  32     11\nSRV-WIN-PROD  google.com      142.250.217.206                  32     13\nSRV-WIN-PROD  google.com      142.250.217.206                  32     11`
+                },
+                {
+                    id: "w_systeminfo",
+                    command: "systeminfo",
+                    title: "Informações Detalhadas do Sistema",
+                    level: "Básico",
+                    category: "#Sistema",
+                    description: "Exibe informações abrangentes sobre o hardware, versão do SO, Hotfix/Atualizações instaladas e placas de rede.",
+                    syntax: "systeminfo [/s <computer> [/u <domain\\user> [/p <password>]]]",
+                    example: "systeminfo | findstr /B /C:\"OS Name\" /C:\"OS Version\"",
+                    outputSim: `Host Name:                 SRV-WIN-PROD01\nOS Name:                   Microsoft Windows Server 2022 Datacenter\nOS Version:                10.0.20348 N/A Build 20348\nOS Manufacturer:           Microsoft Corporation\nSystem Type:               x64-based PC\nProcessor(s):              2 Processor(s) Installed. [01]: Intel64 Family 6 Model 85\nTotal Physical Memory:     16.384 MB\nAvailable Physical Memory: 11.200 MB`
+                },
+                {
+                    id: "w_hostname",
+                    command: "hostname",
+                    title: "Nome do Host local",
+                    level: "Básico",
+                    category: "#Sistema",
+                    description: "Retorna instantaneamente o nome configurado do computador local na rede.",
+                    syntax: "hostname",
+                    example: "hostname",
+                    outputSim: `SRV-WIN-PROD01`
+                },
+                {
+                    id: "w_cls",
+                    command: "Clear-Host",
+                    title: "Limpar Console (cls / clear)",
+                    level: "Básico",
+                    category: "#Utilidades",
+                    description: "Limpa todo o histórico de saída e buffer do terminal de comandos.",
+                    syntax: "Clear-Host",
+                    example: "cls",
+                    outputSim: `[Tela limpa com sucesso]`
+                },
+                {
+                    id: "w2",
+                    command: "Get-Service | Where-Object Status -eq 'Running'",
+                    title: "Listar Serviços Ativos (PowerShell)",
+                    level: "Básico",
+                    category: "#Serviços",
+                    description: "Lista todos os serviços do Windows que estão atualmente em execução no sistema operacional.",
+                    syntax: "Get-Service [-Name <String>]",
+                    example: "Get-Service -Name Spooler",
+                    outputSim: `Status   Name               DisplayName\n------   ----               -----------\nRunning  Appinfo            Application Information\nRunning  AudioSrv           Windows Audio\nRunning  Dhcp               DHCP Client\nRunning  Dnscache           DNS Client\nRunning  EventLog           Windows Event Log\nRunning  Spooler            Print Spooler`
+                },
+                {
+                    id: "w_netsh",
+                    command: "netsh wlan show profiles",
+                    title: "Gerenciar Perfis de Rede (netsh)",
+                    level: "Intermediário",
+                    category: "#Rede",
+                    description: "Utilitário de linha de comando para exibição e modificação da configuração de rede do computador (Wi-Fi, Firewall, IP).",
+                    syntax: "netsh wlan show profile name=\"SSID_NAME\" key=clear",
+                    example: "netsh interface ip show config",
+                    outputSim: `Perfis no perfil de interface Wi-Fi:\n\nPerfis de Usuários do Grupo\n---------------------------\n    Todos os Perfis de Usuários : Corporativo-WiFi\n    Todos os Perfis de Usuários : Visitantes-Guest`
+                },
+                {
+                    id: "w3",
+                    command: "sfc /scannow",
+                    title: "Verificador de Arquivos do Sistema",
+                    level: "Intermediário",
+                    category: "#Segurança",
+                    description: "Verifica a integridade de todos os arquivos protegidos do sistema e substitui as versões corrompidas pelas corretas da Microsoft.",
+                    syntax: "sfc [/scannow] [/verifyonly] [/scanfile=<file>]",
+                    example: "sfc /scannow",
+                    outputSim: `Iniciando verificação do sistema. O processo levará algum tempo.\n\nIniciando fase de verificação da verificação do sistema.\nVerificação 100% concluída.\n\nA Proteção de Recursos do Windows encontrou arquivos corrompidos e os reparou com êxito.`
+                },
+                {
+                    id: "w_chkdsk",
+                    command: "chkdsk C: /f /r",
+                    title: "Verificação de Erros no Disco (chkdsk)",
+                    level: "Intermediário",
+                    category: "#Manutenção",
+                    description: "Verifica a integridade do sistema de arquivos e os metadados do volume em busca de erros lógicos e setores defeituosos (bad sectors).",
+                    syntax: "chkdsk [drive:] [/f] [/r] [/x]",
+                    example: "chkdsk D: /f",
+                    outputSim: `O tipo do sistema de arquivos é NTFS.\nRótulo de volume é OSDisk.\n\nFase 1: Examinando a estrutura básica do sistema de arquivos...\nFase 2: Examinando a vinculação do nome de arquivo...\nFase 3: Examinando os descriptores de segurança...\nO Windows verificou o sistema de arquivos e não encontrou problemas.`
+                },
+                {
+                    id: "w4",
+                    command: "netstat -ano",
+                    title: "Conexões de Rede e Portas Abertas",
+                    level: "Intermediário",
+                    category: "#Rede",
+                    description: "Exibe todas as conexões TCP ativas, portas em escuta e o PID (ID do Processo) associado a cada conexão.",
+                    syntax: "netstat [-a] [-n] [-o] [-p proto] [-r]",
+                    example: "netstat -ano | findstr :80",
+                    outputSim: `Conexões ativas\n\n  Proto  Endereço local         Endereço externo       Estado           PID\n  TCP    0.0.0.0:80             0.0.0.0:0              LISTENING        4\n  TCP    192.168.1.150:443      142.250.217.206:443    ESTABLISHED      4812`
+                },
+                {
+                    id: "w5",
+                    command: "Get-Process | Sort-Object CPU -Descending | Select-Object -First 5",
+                    title: "Top 5 Processos por Consumo de CPU",
+                    level: "Intermediário",
+                    category: "#Processos",
+                    description: "Utiliza PowerShell para listar os 5 processos que mais consomem processamento (CPU) em tempo real.",
+                    syntax: "Get-Process | Sort-Object <Property> -Descending",
+                    example: "Stop-Process -Id 4812 -Force",
+                    outputSim: `Handles  NPM(K)    PM(K)      WS(K)     CPU(s)     Id ProcessName\n-------  ------    -----      -----     ------     -- -----------\n   1204      65   240500     180200     142.50   4812 msedge\n    850      42   180300     120400      88.10   2104 sqlservr\n    620      30    95000      78000      45.20   1120 chrome`
+                },
+                {
+                    id: "w_wmic",
+                    command: "Get-CimInstance -ClassName Win32_OperatingSystem",
+                    title: "Consulta WMI / CIM (Hardware e SO)",
+                    level: "Intermediário",
+                    category: "#Sistema",
+                    description: "Recupera instâncias de classes CIM/WMI para gerenciar inventário de hardware, licenças e estado do SO.",
+                    syntax: "Get-CimInstance -ClassName <String>",
+                    example: "Get-CimInstance Win32_LogicalDisk",
+                    outputSim: `SystemDirectory : C:\\Windows\\system32\nOrganization    : Flávio Santana Inc.\nBuildNumber     : 20348\nRegisteredUser  : Analista Flávio Santana\nSerialNumber    : 00371-10000-00000-AA982\nVersion         : 10.0.20348`
+                },
+                {
+                    id: "w_firewall_rule",
+                    command: "New-NetFirewallRule -DisplayName 'Allow Web 8080' -Direction Inbound -Action Allow -Protocol TCP -LocalPort 8080",
+                    title: "Criar Regra no Windows Firewall",
+                    level: "Intermediário",
+                    category: "#Segurança",
+                    description: "Cria uma nova regra de entrada no Firewall do Windows com PowerShell para liberar portas específicas.",
+                    syntax: "New-NetFirewallRule -DisplayName <String> -Direction <Inbound|Outbound> -Action <Allow|Block> -Protocol <TCP|UDP> -LocalPort <Int>",
+                    example: "Get-NetFirewallRule -DisplayName '*Web*'",
+                    outputSim: `Name                  : {a9127d42-012b-45e0-811d}\nDisplayName           : Allow Web 8080\nEnabled               : True\nDirection             : Inbound\nAction                : Allow\nProtocol              : TCP\nLocalPort             : 8080`
+                },
+                {
+                    id: "w_local_user",
+                    command: "Get-LocalUser | Select-Object Name, Enabled, LastLogon",
+                    title: "Listar Usuários Locais",
+                    level: "Intermediário",
+                    category: "#Segurança",
+                    description: "Retorna as contas de usuários locais registradas no SAM do sistema Windows com seu status de ativação.",
+                    syntax: "Get-LocalUser [[-Name] <String>]",
+                    example: "New-LocalUser -Name 'Suporte' -NoPassword",
+                    outputSim: `Name          Enabled LastLogon\n----          ------- ---------\nAdministrator False   10/10/2026 12:00:00\nFlavioSantana True    11/11/2026 08:30:15\nDefaultAccount False   `
+                },
+                {
+                    id: "w_diskpart_list",
+                    command: "Get-Disk | Select-Object Number, FriendlyName, OperationalStatus, Size",
+                    title: "Listar Discos Físicos (Diskpart/PowerShell)",
+                    level: "Intermediário",
+                    category: "#Manutenção",
+                    description: "Exibe os discos instalados na máquina, seu status operacional e capacidade total de armazenamento.",
+                    syntax: "Get-Disk [[-Number] <UInt32[]>]",
+                    example: "Get-Volume",
+                    outputSim: `Number FriendlyName           OperationalStatus        Size\n------ ------------           -----------------        ----\n0      NVMe Samsung SSD 980   Online            500107862016\n1      ST2000DM008 Seagate    Online           2000398934016`
+                },
+                {
+                    id: "w6",
+                    command: "DISM /Online /Cleanup-Image /RestoreHealth",
+                    title: "Reparo Avançado da Imagem do Windows",
+                    level: "Avançado",
+                    category: "#Manutenção",
+                    description: "Verifica e repara a imagem de componente do Windows usando o Windows Update ou uma fonte de mídia especificada.",
+                    syntax: "DISM.exe /Online /Cleanup-Image /RestoreHealth [/Source:C:\\repairSource\\install.wim]",
+                    example: "DISM /Online /Cleanup-Image /CheckHealth",
+                    outputSim: `Ferramenta de Gerenciamento e Manutenção de Imagens de Implantação\nVersão: 10.0.22621.1\n\nVersão do Imagem do Sistema: 10.0.22621.1825\n\n[==========================100.0%==========================]\nA operação de restauração foi concluída com êxito.`
+                },
+                {
+                    id: "w7",
+                    command: "Get-WinEvent -LogName Security -MaxEvents 5",
+                    title: "Auditoria de Logs de Segurança",
+                    level: "Avançado",
+                    category: "#Segurança",
+                    description: "Recupera os eventos mais recentes do Log de Segurança do Windows para auditoria de login e privilégios.",
+                    syntax: "Get-WinEvent [-LogName] <String> [-MaxEvents <Int64>]",
+                    example: "Get-WinEvent -ListLog *",
+                    outputSim: `ProviderName: Microsoft-Windows-Security-Auditing\n\nTimeCreated          Id LevelDisplayName Message\n-----------          -- ---------------- -------\n11/10/2026 14:22:10 4624 Informação       Logon com êxito para conta de usuário.\n11/10/2026 14:20:05 4672 Informação       Privilégios especiais atribuídos ao novo logon.`
+                },
+                {
+                    id: "w8",
+                    command: "robocopy C:\\Origem D:\\Backup /MIR /R:3 /W:5",
+                    title: "Sincronização Avançada de Arquivos (Robocopy)",
+                    level: "Avançado",
+                    category: "#Arquivos",
+                    description: "Copia diretórios e espelha dados mantendo todas as permissões ACL, carimbos de data/hora e realizando retentativas em falhas.",
+                    syntax: "robocopy <Source> <Destination> [<File>[ ...]] [<Options>]",
+                    example: "robocopy C:\\Dados D:\\Bkp /MIR",
+                    outputSim: `-------------------------------------------------------------------\n   ROBOCOPY     ::     Robust File Copy for Windows\n-------------------------------------------------------------------\n  Origem : C:\\Origem\\\n Destino : D:\\Backup\\\n                   Total    Copiado   Ignorado  Incompatível    Falha\n    Pastas :         12         12          0          0        0\n  Arquivos :        145        145          0          0        0`
+                },
+                {
+                    id: "w_cipher",
+                    command: "cipher /w:C:\\PastaSegura",
+                    title: "Sobrescrever Espaço Livre (Cipher)",
+                    level: "Avançado",
+                    category: "#Segurança",
+                    description: "Remove dados apagados permanentemente sobrescrevendo o espaço em disco não alocado com zeros e caracteres aleatórios.",
+                    syntax: "cipher [/w:directory]",
+                    example: "cipher /e /s:C:\\DadosSensiveis",
+                    outputSim: `Para remover o máximo de dados possível, feche todos os outros aplicativos durante o cipher.\nGravando 0x00 ...\nGravando 0xFF ...\nGravando números aleatórios ...\nLimpeza concluída com sucesso.`
+                },
+                {
+                    id: "w_execpolicy",
+                    command: "Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope LocalMachine",
+                    title: "Política de Execução de Scripts PowerShell",
+                    level: "Avançado",
+                    category: "#Segurança",
+                    description: "Define o nível de confiança e permissão para execução de scripts de terceiros (.ps1) no ambiente Windows.",
+                    syntax: "Set-ExecutionPolicy [-ExecutionPolicy] <ExecutionPolicy> [-Scope <ExecutionPolicyScope>]",
+                    example: "Get-ExecutionPolicy -List",
+                    outputSim: `Alteração da Política de Execução\nA política de execução ajuda a proteger você contra scripts nos quais não confia.\n[Y] Sim  [A] Sim para Todos  [N] Não  [S] Suspender  [?] Ajuda (o padrão é "Y"): Y\n[OK] ExecutionPolicy atualizada para RemoteSigned com sucesso.`
+                },
+                {
+                    id: "w_ad_user",
+                    command: "Get-ADUser -Filter * -Properties Department | Select-Object Name, SamAccountName, Department",
+                    title: "Consultar Usuários do Active Directory",
+                    level: "Avançado",
+                    category: "#ActiveDirectory",
+                    description: "Utiliza o módulo Active Directory do PowerShell para listar contas de usuários de domínio e suas propriedades estendidas.",
+                    syntax: "Get-ADUser -Identity <User> -Properties *",
+                    example: "Get-ADUser -Filter 'Name -like \"Flavio*\"'",
+                    outputSim: `Name           SamAccountName Department\n----           -------------- ----------\nFlavio Santana flavio.santana TI Infrastructure\nAna Silva      ana.silva      Financeiro\nCarlos Souza   carlos.souza   Operacoes`
+                },
+                {
+                    id: "w_reg_query",
+                    command: "Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion'",
+                    title: "Consultar Registro do Windows (Registry)",
+                    level: "Avançado",
+                    category: "#Sistema",
+                    description: "Navega e lê valores de chaves de registro do sistema (HKLM/HKCU) através do drive de Registro no PowerShell.",
+                    syntax: "Get-ItemProperty -Path <RegistryPath> [-Name <String>]",
+                    example: "Get-ItemProperty HKLM:\\SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters",
+                    outputSim: `ProductName:      Windows Server 2022 Datacenter\nEditionID:        ServerDatacenter\nCompositionEditionID: ServerDatacenter\nCurrentBuild:     20348\nInstallDate:      1672531200`
+                },
+                {
+                    id: "w_acl_get",
+                    command: "Get-Acl -Path C:\\Empresa\\Dados | Format-List",
+                    title: "Auditoria de Permissões ACL NTFS",
+                    level: "Avançado",
+                    category: "#Segurança",
+                    description: "Exibe a Lista de Controle de Acesso (ACL) e proprietários de pastas no sistema de arquivos NTFS.",
+                    syntax: "Get-Acl [-Path] <String[]>",
+                    example: "Set-Acl -Path C:\\Dados -AclObject $acl",
+                    outputSim: `Path   : Microsoft.PowerShell.Core\\FileSystem::C:\\Empresa\\Dados\nOwner  : BUILTIN\\Administrators\nGroup  : NT AUTHORITY\\SYSTEM\nAccess : NT AUTHORITY\\SYSTEM Allow  FullControl\n         BUILTIN\\Administrators Allow  FullControl\n         CORP\\TI-Admins Allow  Modify`
+                }
+            ],
+            linux: [
+                {
+                    id: "l1",
+                    command: "ls -la --color=auto",
+                    title: "Listagem Detalhada de Arquivos (ls)",
+                    level: "Básico",
+                    category: "📁 Navegação e Arquivos",
+                    description: "Lista o conteúdo de diretórios. Use -l para detalhes avançados (permissões, dono, tamanho) ou -a para incluir arquivos ocultos.",
+                    syntax: "ls [-l] [-a] [-h] [diretório]",
+                    example: "ls -lh /var/log",
+                    outputSim: `total 48\ndrwxr-xr-x 4 root root 4096 Nov 11 10:00 .\ndrwxr-xr-x 1 root root 4096 Nov 10 18:30 ..\n-rw-r--r-- 1 root root  220 Nov 10 18:30 .bashrc\n-rw-r--r-- 1 root root 3771 Nov 10 18:30 .profile\ndrwxr-xr-x 2 root root 4096 Nov 11 09:15 scripts`
+                },
+                {
+                    id: "l_cd",
+                    command: "cd /var/www/html && pwd",
+                    title: "Alternar de Diretório (cd)",
+                    level: "Básico",
+                    category: "📁 Navegação e Arquivos",
+                    description: "Troca o diretório de trabalho atual (ex: cd /pasta, cd .. para voltar um nível, cd ~ para a pasta home do usuário).",
+                    syntax: "cd <diretório>",
+                    example: "cd ..",
+                    outputSim: `[Diretório alterado para: /var/www/html]`
+                },
+                {
+                    id: "l_pwd",
+                    command: "pwd",
+                    title: "Mostrar Diretório Atual (pwd)",
+                    level: "Básico",
+                    category: "📁 Navegação e Arquivos",
+                    description: "Mostra o caminho absoluto completo do diretório atual onde você está trabalhando.",
+                    syntax: "pwd",
+                    example: "pwd",
+                    outputSim: `/home/flavio/projetos/portal-sysadmin`
+                },
+                {
+                    id: "l_mkdir",
+                    command: "mkdir -p /var/backup/db_daily",
+                    title: "Criar Diretório (mkdir)",
+                    level: "Básico",
+                    category: "📁 Navegação e Arquivos",
+                    description: "Cria um novo diretório (pasta). O parâmetro -p cria subpastas intermediárias recursivamente se não existirem.",
+                    syntax: "mkdir [-p] <nome_do_diretorio>",
+                    example: "mkdir -p /tmp/teste/subpasta",
+                    outputSim: `[OK] Diretório '/var/backup/db_daily' criado com sucesso.`
+                },
+                {
+                    id: "l_rmdir",
+                    command: "rmdir /tmp/pasta_vazia",
+                    title: "Remover Diretório Vazio (rmdir)",
+                    level: "Básico",
+                    category: "📁 Navegação e Arquivos",
+                    description: "Remove um diretório do sistema operacional desde que ele esteja completamente vazio.",
+                    syntax: "rmdir <diretorio>",
+                    example: "rmdir /tmp/antigo",
+                    outputSim: `[OK] Diretório '/tmp/pasta_vazia' removido.`
+                },
+                {
+                    id: "l_cp",
+                    command: "cp -r /var/www/html /backup/www_backup",
+                    title: "Copiar Arquivos ou Pastas (cp)",
+                    level: "Básico",
+                    category: "📁 Navegação e Arquivos",
+                    description: "Copia arquivos ou diretórios de um local para outro. A opção -r ativa a cópia recursiva para pastas.",
+                    syntax: "cp [-r] <origem> <destino>",
+                    example: "cp config.env config.env.bak",
+                    outputSim: `[OK] Conteúdo de '/var/www/html' copiado recursivamente para '/backup/www_backup'.`
+                },
+                {
+                    id: "l_mv",
+                    command: "mv relatorio_v1.txt /docs/relatorio_final.txt",
+                    title: "Mover ou Renomear Arquivos (mv)",
+                    level: "Básico",
+                    category: "📁 Navegação e Arquivos",
+                    description: "Move arquivos e pastas entre diretórios ou altera o nome de um arquivo no mesmo local.",
+                    syntax: "mv <origem> <destino>",
+                    example: "mv antigo.txt novo.txt",
+                    outputSim: `[OK] Arquivo 'relatorio_v1.txt' movido/renomeado para '/docs/relatorio_final.txt'.`
+                },
+                {
+                    id: "l_rm",
+                    command: "rm -rf /tmp/cache_antigo",
+                    title: "Remover Arquivos ou Pastas (rm)",
+                    level: "Intermediário",
+                    category: "📁 Navegação e Arquivos",
+                    description: "Remove arquivos ou pastas. O parâmetro -rf apaga recursivamente e força a exclusão sem pedir confirmação.",
+                    syntax: "rm [-r] [-f] <arquivo/diretorio>",
+                    example: "rm -f arquivo.log",
+                    outputSim: `[OK] Diretório e conteúdo de '/tmp/cache_antigo' excluídos.`
+                },
+                {
+                    id: "l_touch",
+                    command: "touch /var/log/app_audit.log",
+                    title: "Criar Arquivo Vazio ou Atualizar Timestamp (touch)",
+                    level: "Básico",
+                    category: "📁 Navegação e Arquivos",
+                    description: "Cria um novo arquivo de texto vazio se ele não existir ou atualiza a data/hora de modificação de um arquivo existente.",
+                    syntax: "touch <nome_do_arquivo>",
+                    example: "touch arquivo.txt",
+                    outputSim: `[OK] Arquivo '/var/log/app_audit.log' criado/atualizado.`
+                },
+                {
+                    id: "l7",
+                    command: "find /var/log -type f -name '*.log' -mtime -7",
+                    title: "Procurar Arquivos e Pastas (find)",
+                    level: "Intermediário",
+                    category: "📁 Navegação e Arquivos",
+                    description: "Procura arquivos e diretórios na estrutura de pastas com base em critérios como nome, extensão, tamanho, permissão e data.",
+                    syntax: "find <caminho> -type <f|d> -name <padrão>",
+                    example: "find /home -name '*.pdf'",
+                    outputSim: `/var/log/syslog.log\n/var/log/nginx/access.log\n/var/log/auth.log\n\n[3 arquivos encontrados]`
+                },
+                {
+                    id: "l_cat",
+                    command: "cat /etc/os-release",
+                    title: "Exibir Conteúdo Completo (cat)",
+                    level: "Básico",
+                    category: "📄 Texto e Logs",
+                    description: "Exibe o conteúdo integral de um arquivo de texto diretamente no terminal.",
+                    syntax: "cat <arquivo>",
+                    example: "cat /etc/hosts",
+                    outputSim: `NAME="Ubuntu"\nVERSION="24.04 LTS (Noble Numbat)"\nID=ubuntu\nID_LIKE=debian\nPRETTY_NAME="Ubuntu 24.04 LTS"\nVERSION_ID="24.04"`
+                },
+                {
+                    id: "l_less_more",
+                    command: "less /var/log/syslog",
+                    title: "Ler Arquivos Página por Página (less / more)",
+                    level: "Básico",
+                    category: "📄 Texto e Logs",
+                    description: "Permite navegar e ler arquivos de texto grandes página por página (utilize as setas ou barras de espaço para rolar e 'q' para sair).",
+                    syntax: "less <arquivo> | more <arquivo>",
+                    example: "more /etc/services",
+                    outputSim: `[Página 1/15 - Use SETAS para navegar, Q para sair]\nNov 11 08:00:01 server systemd[1]: Starting System Logging Service...\nNov 11 08:00:02 server kernel: [0.000000] Linux version 6.5.0`
+                },
+                {
+                    id: "l_head_tail",
+                    command: "tail -n 20 -f /var/log/nginx/access.log",
+                    title: "Linhas Iniciais ou Finais (head / tail)",
+                    level: "Básico",
+                    category: "📄 Texto e Logs",
+                    description: "head mostra as primeiras linhas e tail exibe as últimas linhas de um arquivo. O parâmetro tail -f acompanha novos logs gravados em tempo real.",
+                    syntax: "head -n <qtd> <arquivo> | tail -n <qtd> -f <arquivo>",
+                    example: "head -n 10 /etc/passwd",
+                    outputSim: `192.168.1.10 - - [11/Nov/2026:10:15:30 +0000] "GET /api/v1/health HTTP/1.1" 200 45\n192.168.1.14 - - [11/Nov/2026:10:15:32 +0000] "POST /login HTTP/1.1" 200 512\n[Acompanhando em tempo real...]`
+                },
+                {
+                    id: "l5",
+                    command: "grep -i -n 'ERROR' /var/log/syslog",
+                    title: "Filtrar Padrões e Palavras (grep)",
+                    level: "Intermediário",
+                    category: "📄 Texto e Logs",
+                    description: "Filtra e busca por palavras ou expressões regulares dentro de textos ou arquivos.",
+                    syntax: "grep [opções] 'termo' <arquivo>",
+                    example: "grep -rn 'Failed' /var/log/auth.log",
+                    outputSim: `/var/log/syslog:142: Nov 11 09:12:04 srv-linux kernel: [ERROR] Failed to initialize device eth1\n/var/log/syslog:289: Nov 11 09:45:22 srv-linux systemd[1]: [ERROR] Failed to start Database Service.`
+                },
+                {
+                    id: "l_wc",
+                    command: "wc -l /etc/passwd",
+                    title: "Contar Linhas, Palavras e Caracteres (wc)",
+                    level: "Básico",
+                    category: "📄 Texto e Logs",
+                    description: "Conta a quantidade de linhas (-l), palavras (-w) ou caracteres (-c) presentes em um arquivo de texto.",
+                    syntax: "wc [-l|-w|-c] <arquivo>",
+                    example: "wc -l log.txt",
+                    outputSim: `42 /etc/passwd`
+                },
+                {
+                    id: "l_sort_uniq",
+                    command: "sort /tmp/lista_ip.txt | uniq -c",
+                    title: "Ordenar e Remover Duplicados (sort / uniq)",
+                    level: "Intermediário",
+                    category: "📄 Texto e Logs",
+                    description: "sort ordena linhas de um arquivo em ordem alfabética/numérica e uniq remove ou conta (-c) linhas duplicadas consecutivas.",
+                    syntax: "sort <arquivo> | uniq [-c]",
+                    example: "cat ips.txt | sort | uniq",
+                    outputSim: `     15 10.0.0.1\n      4 192.168.1.50\n     32 192.168.1.100`
+                },
+                {
+                    id: "l_ps",
+                    command: "ps aux | grep nginx",
+                    title: "Exibir Processos em Execução (ps)",
+                    level: "Básico",
+                    category: "⚙️ Sistema e Processos",
+                    description: "Exibe instantaneamente os processos ativos no sistema operacional, mostrando PID, usuário, consumo de CPU e RAM.",
+                    syntax: "ps [aux | -ef]",
+                    example: "ps aux",
+                    outputSim: `USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND\nroot      1420  0.0  0.2  145M 12400 ?        Ss   08:30   0:00 nginx: master process\nwww-data  1421  0.5  0.3  148M 15200 ?        S    08:30   0:12 nginx: worker process`
+                },
+                {
+                    id: "l6",
+                    command: "htop",
+                    title: "Monitoramento em Tempo Real (top / htop)",
+                    level: "Intermediário",
+                    category: "⚙️ Sistema e Processos",
+                    description: "Monitores interativos que exibem em tempo real a utilização dos núcleos de CPU, consumo de memória RAM, Swap e lista dinâmica de processos.",
+                    syntax: "top | htop",
+                    example: "top",
+                    outputSim: `  1  [|||||||||||||||||||45.0%]   Tasks: 85, 233 thr; 1 running\n  2  [|||||||15.2%]               Load average: 0.52 0.38 0.25 \n  Mem[||||||||||||||||2.10G/7.70G] Swp[0K/2.00G]\n\n  PID USER      PRI  NI  VIRT   RES   SHR S CPU% MEM%   TIME+  Command\n 1420 www-data   20   0  145M 12400  8100 S  4.2  0.2  0:12.45 nginx: worker`
+                },
+                {
+                    id: "l_kill",
+                    command: "kill -9 4812 && killall nginx",
+                    title: "Encerrar Processos (kill / killall)",
+                    level: "Intermediário",
+                    category: "⚙️ Sistema e Processos",
+                    description: "Encerra processos enviando sinais do SO. kill utiliza o número PID do processo e killall encerra pelo nome do programa.",
+                    syntax: "kill [-9] <PID> | killall <nome_processo>",
+                    example: "kill -9 1421",
+                    outputSim: `[OK] Sinal SIGKILL (9) enviado para o PID 4812.\n[OK] Todos os processos 'nginx' foram encerrados.`
+                },
+                {
+                    id: "l4",
+                    command: "df -hT",
+                    title: "Espaço em Disco Livre/Ocupado (df)",
+                    level: "Básico",
+                    category: "⚙️ Sistema e Processos",
+                    description: "Exibe o consumo de espaço em disco e pontos de montagem dos sistemas de arquivos em unidades de medida humanas (-h: GB, MB).",
+                    syntax: "df [-h] [-T]",
+                    example: "df -h /home",
+                    outputSim: `Filesystem     Type      Size  Used Avail Use% Mounted on\n/dev/sda1      ext4       50G   18G   30G  38% /\ntmpfs          tmpfs      3.9G     0  3.9G   0% /dev/shm`
+                },
+                {
+                    id: "l_du",
+                    command: "du -sh /var/log/*",
+                    title: "Tamanho de Uso de Arquivos e Pastas (du)",
+                    level: "Intermediário",
+                    category: "⚙️ Sistema e Processos",
+                    description: "Calcula e exibe o tamanho real ocupado em disco por diretórios e seus subarquivos (-s para resumo, -h para legível).",
+                    syntax: "du [-s] [-h] <caminho>",
+                    example: "du -sh /var/www",
+                    outputSim: `1.2G    /var/log/journal\n450M    /var/log/nginx\n12M     /var/log/syslog`
+                },
+                {
+                    id: "l_free",
+                    command: "free -h",
+                    title: "Uso da Memória RAM e Swap (free)",
+                    level: "Básico",
+                    category: "⚙️ Sistema e Processos",
+                    description: "Exibe a quantidade total, usada, livre e em cache de memória RAM e memória Swap do sistema.",
+                    syntax: "free [-h] [-m] [-g]",
+                    example: "free -m",
+                    outputSim: `               total        used        free      shared  buff/cache   available\nMem:           7.7Gi       2.1Gi       3.4Gi       120Mi       2.2Gi       5.3Gi\nSwap:          2.0Gi          0B       2.0Gi`
+                },
+                {
+                    id: "l_uname",
+                    command: "uname -a",
+                    title: "Informações do Kernel e Sistema (uname)",
+                    level: "Básico",
+                    category: "⚙️ Sistema e Processos",
+                    description: "Exibe dados detalhados do sistema operacional, como versão do Kernel Linux, nome do host e arquitetura de hardware.",
+                    syntax: "uname [-a|-r|-m]",
+                    example: "uname -r",
+                    outputSim: `Linux portal-server 6.5.0-41-generic #41-Ubuntu SMP PREEMPT_DYNAMIC Mon Jun 10 11:01:22 UTC 2026 x86_64 x86_64 GNU/Linux`
+                },
+                {
+                    id: "l_power",
+                    command: "shutdown -h now | reboot",
+                    title: "Desligar ou Reiniciar (shutdown / reboot)",
+                    level: "Intermediário",
+                    category: "⚙️ Sistema e Processos",
+                    description: "Programa o desligamento seguro (shutdown) do sistema ou solicita a reinicialização imediata (reboot) do computador.",
+                    syntax: "shutdown [-h|-r] <horário> | reboot",
+                    example: "shutdown -r +10 'Manutenção em 10 min'",
+                    outputSim: `Broadcast message from root@portal-server:\nSystem is going down for reboot NOW!`
+                },
+                {
+                    id: "l_sudo",
+                    command: "sudo systemctl restart nginx",
+                    title: "Executar com Privilégios de Administrador (sudo)",
+                    level: "Básico",
+                    category: "👤 Usuários e Permissões",
+                    description: "Permite que usuários autorizados executem comandos com privilégios de superusuário (root).",
+                    syntax: "sudo <comando>",
+                    example: "sudo apt update",
+                    outputSim: `[sudo] senha para flavio: \n[OK] Comando executado com sucesso como ROOT.`
+                },
+                {
+                    id: "l_su",
+                    command: "su - adminuser",
+                    title: "Alternar Usuário no Terminal (su)",
+                    level: "Intermediário",
+                    category: "👤 Usuários e Permissões",
+                    description: "Alterna a sessão do terminal para outro usuário do sistema (utilizar 'su -' carrega as variáveis de ambiente do usuário).",
+                    syntax: "su - <usuario>",
+                    example: "su -",
+                    outputSim: `Senha: \nSessão iniciada como 'adminuser' em /home/adminuser`
+                },
+                {
+                    id: "l_passwd",
+                    command: "passwd",
+                    title: "Alterar Senha do Usuário (passwd)",
+                    level: "Básico",
+                    category: "👤 Usuários e Permissões",
+                    description: "Altera a senha da conta do usuário logado ou de outra conta (se executado com sudo).",
+                    syntax: "passwd [usuario]",
+                    example: "sudo passwd flavio",
+                    outputSim: `Alterando senha para flavio.\n(atual) UNIX password: \nEnter new UNIX password: \nRetype new UNIX password: \npasswd: password updated successfully`
+                },
+                {
+                    id: "l_whoami",
+                    command: "whoami",
+                    title: "Identificar Usuário Atual (whoami)",
+                    level: "Básico",
+                    category: "👤 Usuários e Permissões",
+                    description: "Exibe o nome do usuário que possui a sessão ativa no momento no terminal.",
+                    syntax: "whoami",
+                    example: "whoami",
+                    outputSim: `root`
+                },
+                {
+                    id: "l3",
+                    command: "chmod 755 script.sh",
+                    title: "Permissões de Arquivos e Pastas (chmod)",
+                    level: "Intermediário",
+                    category: "👤 Usuários e Permissões",
+                    description: "Altera as permissões de Leitura (4), Escrita (2) e Execução (1) para o Proprietário, Grupo e Outros.",
+                    syntax: "chmod <código_octal> <arquivo>",
+                    example: "chmod +x deploy.sh",
+                    outputSim: `[OK] Permissões de 'script.sh' atualizadas para 755 (rwxr-xr-x)`
+                },
+                {
+                    id: "l_chown",
+                    command: "chown -R www-data:www-data /var/www/html",
+                    title: "Alterar Propriedade de Arquivos (chown)",
+                    level: "Intermediário",
+                    category: "👤 Usuários e Permissões",
+                    description: "Define o usuário dono e o grupo proprietário de arquivos ou pastas (opção -R para recursivo).",
+                    syntax: "chown [-R] <dono>:<grupo> <caminho>",
+                    example: "chown root:root config.cfg",
+                    outputSim: `[OK] Proprietário de '/var/www/html' alterado para www-data:www-data`
+                },
+                {
+                    id: "l_ping",
+                    command: "ping -c 4 google.com",
+                    title: "Testar Conectividade ICMP (ping)",
+                    level: "Básico",
+                    category: "🌐 Rede e Conectividade",
+                    description: "Envia pacotes de eco ICMP para checar a acessibilidade de rede e verificar tempo de resposta (latência) com um host/IP.",
+                    syntax: "ping [-c quantidade] <host_ou_ip>",
+                    example: "ping -c 4 1.1.1.1",
+                    outputSim: `PING google.com (142.250.217.206) 56(84) bytes of data.\n64 bytes from 142.250.217.206: icmp_seq=1 ttl=115 time=11.2 ms\n64 bytes from 142.250.217.206: icmp_seq=2 ttl=115 time=10.8 ms\n--- google.com ping statistics ---\n4 packets transmitted, 4 received, 0% packet loss, time 3004ms`
+                },
+                {
+                    id: "l_ip",
+                    command: "ip a && ip route",
+                    title: "Gerenciar Interfaces e IP (ip / ifconfig)",
+                    level: "Básico",
+                    category: "🌐 Rede e Conectividade",
+                    description: "Substitui o antigo ifconfig. Exibe os endereços IP, status das placas de rede e tabela de rotas do sistema.",
+                    syntax: "ip addr show | ip route show | ifconfig",
+                    example: "ip a show eth0",
+                    outputSim: `2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP\n    inet 192.168.1.55/24 brd 192.168.1.255 scope global eth0\n\ndefault via 192.168.1.1 dev eth0 proto dhcp src 192.168.1.55 metric 100`
+                },
+                {
+                    id: "l_curl_wget",
+                    command: "curl -I https://google.com && wget -q https://example.com/file.zip",
+                    title: "Requisições HTTP e Download (curl / wget)",
+                    level: "Intermediário",
+                    category: "🌐 Rede e Conectividade",
+                    description: "curl faz requisições HTTP/API e exibe respostas no terminal. wget realiza download direto de arquivos via linha de comando.",
+                    syntax: "curl [opções] <URL> | wget <URL>",
+                    example: "curl -O https://site.com/script.sh",
+                    outputSim: `HTTP/2 200 \ndate: Wed, 11 Nov 2026 10:20:00 GMT\ncontent-type: text/html; charset=ISO-8859-1\n\n[OK] Arquivo 'file.zip' baixado com sucesso.`
+                },
+                {
+                    id: "l_netstat_ss",
+                    command: "ss -tulpn",
+                    title: "Conexões e Portas Abertas (netstat / ss)",
+                    level: "Intermediário",
+                    category: "🌐 Rede e Conectividade",
+                    description: "Exibe sockets de rede ativos, portas TCP/UDP em escuta (LISTEN) e o nome/PID dos processos associados.",
+                    syntax: "ss -tulpn | netstat -tulnp",
+                    example: "ss -tulpn | grep :80",
+                    outputSim: `Netid  State   Recv-Q  Send-Q   Local Address:Port   Peer Address:Port  Process\ntcp    LISTEN  0       128            0.0.0.0:80          0.0.0.0:*      users:(("nginx",pid=1420,fd=6))\ntcp    LISTEN  0       128            0.0.0.0:22          0.0.0.0:*      users:(("sshd",pid=890,fd=3))`
+                },
+                {
+                    id: "l_ssh",
+                    command: "ssh -i ~/.ssh/id_rsa root@192.168.1.100 -p 22",
+                    title: "Conexão Remota Segura (ssh)",
+                    level: "Intermediário",
+                    category: "🌐 Rede e Conectividade",
+                    description: "Estabelece uma sessão criptografada de terminal remoto com outro servidor Linux na rede.",
+                    syntax: "ssh [-i chave] usuario@host [-p porta]",
+                    example: "ssh admin@10.0.0.1",
+                    outputSim: `Authenticating with public key "id_rsa"\nWelcome to Ubuntu 24.04 LTS (GNU/Linux 6.5.0 x86_64)\nroot@srv-remoto:~# `
+                },
+                {
+                    id: "l_apt",
+                    command: "sudo apt update && sudo apt install -y htop nginx",
+                    title: "Gerenciador de Pacotes APT (Debian/Ubuntu/Mint)",
+                    level: "Básico",
+                    category: "📦 Gerenciamento de Pacotes",
+                    description: "Atualiza a lista de repositórios e instala, atualiza ou remove pacotes em distribuições baseadas em Debian e Ubuntu.",
+                    syntax: "apt [update|upgrade|install|remove] <pacote>",
+                    example: "sudo apt remove --purge apache2",
+                    outputSim: `Hit:1 http://archive.ubuntu.com/ubuntu noble InRelease\nReading package lists... Done\nBuilding dependency tree... Done\nThe following NEW packages will be installed: htop nginx\nSetting up htop (3.3.0)... Done\nSetting up nginx (1.24.0)... Done`
+                },
+                {
+                    id: "l_dnf",
+                    command: "sudo dnf check-update && sudo dnf install -y httpd",
+                    title: "Gerenciador YUM / DNF (CentOS/RHEL/Fedora)",
+                    level: "Básico",
+                    category: "📦 Gerenciamento de Pacotes",
+                    description: "Gerencia a instalação, atualização e remoção de programas em distribuições da família Red Hat Enterprise Linux.",
+                    syntax: "dnf [check-update|install|remove|search] <pacote>",
+                    example: "sudo yum update",
+                    outputSim: `Last metadata expiration check performed 0:15:20 ago.\nDependencies resolved.\nPackage        Arch      Version          Repository     Size\nhttpd          x86_64    2.4.57-2.el9     appstream      54 k\nComplete!`
+                },
+                {
+                    id: "l_pacman",
+                    command: "sudo pacman -Syu neofetch",
+                    title: "Gerenciador Pacman (Arch Linux)",
+                    level: "Intermediário",
+                    category: "📦 Gerenciamento de Pacotes",
+                    description: "Gerencia repositórios e compilações de pacotes na distribuição Arch Linux e suas derivadas (Manjaro, EndeavourOS).",
+                    syntax: "pacman [-Syu | -S | -R | -Ss] <pacote>",
+                    example: "pacman -Ss nginx",
+                    outputSim: `:: Synchronizing package databases...\n:: Starting full system upgrade...\nresolving dependencies...\nlooking for conflicting packages...\nPackages (1) neofetch-7.1.0-2\n:: Proceed with installation? [Y/n] y`
+                },
+                {
+                    id: "l_snap_flatpak",
+                    command: "snap install docker && flatpak install flathub org.gimp.GIMP",
+                    title: "Pacotes Universais (Snap / Flatpak)",
+                    level: "Intermediário",
+                    category: "📦 Gerenciamento de Pacotes",
+                    description: "Gerenciadores de aplicativos empacotados de forma isolada e universal compatíveis com qualquer distribuição Linux.",
+                    syntax: "snap install <app> | flatpak install <app>",
+                    example: "snap list",
+                    outputSim: `docker 24.0.5 from Canonical✓ installed\nInstalling GIMP/x86_64/stable from flathub...\n[====================] 100% Download completed.`
+                }
+            ]
+        };
+
+        // Current Application State
+        let currentOS = 'windows';
+        let currentLevel = 'all';
+        let currentTag = 'all';
+
+        // Initialize App on DOM Loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('year').textContent = new Date().getFullYear();
+            renderCategoryTags();
+            filterCommands();
+        });
+
+        // Function: Go to Home (Reset all view settings to default)
+        function goHome() {
+            // Reset OS to default (Windows)
+            switchOS('windows');
+
+            // Reset Search Input & Filters
+            document.getElementById('searchInput').value = '';
+            document.getElementById('btnClearSearch').classList.add('hidden');
+            currentLevel = 'all';
+            currentTag = 'all';
+            filterLevel('all');
+            renderCategoryTags();
+            filterCommands();
+
+            // Clear Terminal Logs
+            clearTerminal();
+
+            // Smooth Scroll to Top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            showToast("Voltou para a Tela Inicial");
+        }
+
+        // Function: Clear Terminal Console Output
+        function clearTerminal() {
+            const terminalLogs = document.getElementById('terminal-logs');
+            if (terminalLogs) {
+                terminalLogs.innerHTML = '';
+            }
+
+            const promptSymbol = currentOS === 'windows' ? 'PS C:\\Admin>' : 'root@portal-server:~#';
+            const promptColor = currentOS === 'windows' ? 'text-sky-400' : 'text-amber-400';
+
+            // Add a clean initial prompt line
+            if (terminalLogs) {
+                const cleanLine = document.createElement('div');
+                cleanLine.className = 'flex items-center space-x-2 pt-1';
+                cleanLine.innerHTML = `
+                    <span class="${promptColor} font-bold">${promptSymbol}</span>
+                    <span class="text-slate-500 animate-pulse">_</span>
+                `;
+                terminalLogs.appendChild(cleanLine);
+            }
+        }
+
+        // Switch Active Operating System
+        function switchOS(os) {
+            currentOS = os;
+            
+            // Update OS Tab Buttons UI
+            const btnWin = document.getElementById('btn-win');
+            const btnLin = document.getElementById('btn-lin');
+            const osBanner = document.getElementById('os-banner');
+            const osIconBox = document.getElementById('os-icon-box');
+            const osTitle = document.getElementById('os-title');
+            const osSubtitle = document.getElementById('os-subtitle');
+            const termTitle = document.getElementById('terminal-title');
+
+            if (os === 'windows') {
+                btnWin.className = 'os-tab-btn flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 bg-blue-600 text-white shadow-lg shadow-blue-600/30';
+                btnLin.className = 'os-tab-btn flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 text-slate-400 hover:text-white hover:bg-slate-800';
+                
+                osBanner.className = 'p-4 rounded-xl border flex items-center justify-between transition-all bg-blue-950/30 border-blue-800/40';
+                osIconBox.className = 'w-10 h-10 rounded-lg flex items-center justify-center bg-blue-600/20 text-blue-400 text-xl';
+                osIconBox.innerHTML = '<i class="fab fa-windows"></i>';
+                osTitle.textContent = 'Administração Windows (CMD & PowerShell)';
+                osSubtitle.textContent = 'Exibindo comandos essenciais para gerenciamento de servidores e estações Windows.';
+                termTitle.innerHTML = '<i class="fas fa-terminal text-blue-400"></i> Windows PowerShell Simulator';
+            } else {
+                btnLin.className = 'os-tab-btn flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 bg-amber-600 text-white shadow-lg shadow-amber-600/30';
+                btnWin.className = 'os-tab-btn flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 text-slate-400 hover:text-white hover:bg-slate-800';
+                
+                osBanner.className = 'p-4 rounded-xl border flex items-center justify-between transition-all bg-amber-950/30 border-amber-800/40';
+                osIconBox.className = 'w-10 h-10 rounded-lg flex items-center justify-center bg-amber-600/20 text-amber-400 text-xl';
+                osIconBox.innerHTML = '<i class="fab fa-linux"></i>';
+                osTitle.textContent = 'Administração Linux (Bash & Shell Script)';
+                osSubtitle.textContent = 'Exibindo comandos para administração de servidores Linux, Shell e serviços de rede.';
+                termTitle.innerHTML = '<i class="fas fa-terminal text-amber-400"></i> Linux Bash Shell Simulator';
+            }
+
+            // Reset Subfilters & Render
+            currentTag = 'all';
+            renderCategoryTags();
+            filterCommands();
+            clearTerminal();
+        }
+
+        // Render Unique Category Tags based on active OS
+        function renderCategoryTags() {
+            const tagContainer = document.getElementById('tagContainer');
+            const osData = commandDatabase[currentOS];
+            const tags = ['all', ...new Set(osData.map(cmd => cmd.category))];
+
+            tagContainer.innerHTML = tags.map(tag => {
+                const label = tag === 'all' ? 'Todas Tags' : tag;
+                const isActive = currentTag === tag;
+                const activeClasses = isActive 
+                    ? 'bg-slate-700 text-white border-slate-500 shadow-sm' 
+                    : 'bg-slate-900/80 text-slate-400 border-slate-800 hover:text-slate-200';
+
+                return `<button onclick="filterTag('${tag}')" class="px-2.5 py-1 rounded-md text-xs font-mono border ${activeClasses} transition-all">
+                    ${label}
+                </button>`;
+            }).join('');
+        }
+
+        // Filter Level Action
+        function filterLevel(level) {
+            currentLevel = level;
+            document.querySelectorAll('.lvl-btn').forEach(btn => {
+                if (btn.getAttribute('data-level') === level) {
+                    btn.className = 'lvl-btn px-3 py-1.5 rounded-lg text-xs font-medium border border-cyan-500/40 bg-cyan-500/20 text-cyan-300 transition-all shadow-sm';
+                } else {
+                    btn.className = 'lvl-btn px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-700 bg-slate-900 text-slate-400 hover:text-slate-200 transition-all';
+                }
+            });
+            filterCommands();
+        }
+
+        // Filter Tag Action
+        function filterTag(tag) {
+            currentTag = tag;
+            renderCategoryTags();
+            filterCommands();
+        }
+
+        // Clear Search Bar Input
+        function clearSearch() {
+            const input = document.getElementById('searchInput');
+            input.value = '';
+            document.getElementById('btnClearSearch').classList.add('hidden');
+            filterCommands();
+        }
+
+        // Core Command Filtering Algorithm
+        function filterCommands() {
+            const searchVal = document.getElementById('searchInput').value.toLowerCase().trim();
+            const btnClear = document.getElementById('btnClearSearch');
+            
+            if (searchVal.length > 0) {
+                btnClear.classList.remove('hidden');
+            } else {
+                btnClear.classList.add('hidden');
+            }
+
+            const rawList = commandDatabase[currentOS];
+            const filtered = rawList.filter(item => {
+                const matchSearch = item.command.toLowerCase().includes(searchVal) ||
+                                    item.title.toLowerCase().includes(searchVal) ||
+                                    item.description.toLowerCase().includes(searchVal) ||
+                                    item.category.toLowerCase().includes(searchVal);
+                
+                const matchLevel = (currentLevel === 'all') || (item.level === currentLevel);
+                const matchTag = (currentTag === 'all') || (item.category === currentTag);
+
+                return matchSearch && matchLevel && matchTag;
+            });
+
+            renderCommandList(filtered);
+        }
+
+        // Reset all active filters
+        function resetFilters() {
+            document.getElementById('searchInput').value = '';
+            currentLevel = 'all';
+            currentTag = 'all';
+            filterLevel('all');
+            renderCategoryTags();
+            filterCommands();
+        }
+
+        // Render Filtered Command Cards
+        function renderCommandList(list) {
+            const container = document.getElementById('commandList');
+            const noResults = document.getElementById('noResults');
+            const countBadge = document.getElementById('command-count');
+
+            countBadge.textContent = `${list.length} Comando${list.length !== 1 ? 's' : ''}`;
+
+            if (list.length === 0) {
+                container.innerHTML = '';
+                noResults.classList.remove('hidden');
+                return;
+            }
+
+            noResults.classList.add('hidden');
+
+            container.innerHTML = list.map(item => {
+                let badgeColor = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
+                if (item.level === 'Intermediário') badgeColor = 'bg-amber-500/10 text-amber-400 border-amber-500/30';
+                if (item.level === 'Avançado') badgeColor = 'bg-rose-500/10 text-rose-400 border-rose-500/30';
+
+                return `
+                <div class="glass-panel p-5 rounded-xl border border-slate-800 hover:border-slate-700 transition-all duration-200 group shadow-lg">
+                    <div class="flex items-start justify-between gap-4">
+                        <div>
+                            <div class="flex items-center space-x-2 mb-1.5">
+                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${badgeColor}">
+                                    ${item.level}
+                                </span>
+                                <span class="text-xs font-mono text-slate-400">${item.category}</span>
+                            </div>
+                            <h3 class="font-bold text-base text-slate-100 group-hover:text-cyan-300 transition-colors">
+                                ${item.title}
+                            </h3>
+                        </div>
+                        <button onclick="copyToClipboard('${escapeJsString(item.command)}', this)" title="Copiar Comando" class="px-3 py-1.5 rounded-lg bg-slate-900/90 text-slate-300 hover:text-white border border-slate-700/80 hover:border-cyan-500 transition-all text-xs flex items-center gap-1.5 font-semibold">
+                            <i class="far fa-copy"></i> Copiar
+                        </button>
+                    </div>
+
+                    <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+                        ${item.description}
+                    </p>
+
+                    <!-- Code Snippet Box -->
+                    <div class="mt-4 bg-slate-950 p-3 rounded-lg border border-slate-800/80 font-mono text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                        <code class="text-cyan-400 overflow-x-auto whitespace-nowrap py-1 w-full sm:w-auto">
+                            ${escapeHtml(item.command)}
+                        </code>
+                        <button onclick="runSimulation('${item.id}')" class="shrink-0 w-full sm:w-auto px-3 py-1.5 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/40 rounded-lg text-xs font-sans font-semibold transition-all flex items-center justify-center gap-1.5">
+                            <i class="fas fa-play text-[10px]"></i> Executar em Tela
+                        </button>
+                    </div>
+
+                    <div class="mt-3 pt-3 border-t border-slate-800/60 text-[11px] text-slate-500 flex flex-wrap gap-x-4 gap-y-1 font-mono">
+                        <span><strong class="text-slate-400 font-sans">Sintaxe:</strong> ${escapeHtml(item.syntax)}</span>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        // Run Command Simulation in Terminal Screen
+        function runSimulation(commandId) {
+            const list = commandDatabase[currentOS];
+            const item = list.find(c => c.id === commandId);
+            if (!item) return;
+
+            const terminalLogs = document.getElementById('terminal-logs');
+            const promptSymbol = currentOS === 'windows' ? 'PS C:\\Admin>' : 'root@portal-server:~#';
+            const promptColor = currentOS === 'windows' ? 'text-sky-400' : 'text-amber-400';
+
+            const logEntry = document.createElement('div');
+            logEntry.className = 'space-y-1.5 animate-fadeIn border-b border-slate-800/60 pb-3';
+
+            logEntry.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <span class="${promptColor} font-bold">${promptSymbol}</span>
+                        <span class="text-slate-100 font-bold">${escapeHtml(item.command)}</span>
+                    </div>
+                    <button onclick="copyToClipboard('${escapeJsString(item.command)}', this)" title="Copiar Comando do Terminal" class="text-[10px] text-slate-400 hover:text-white px-2 py-0.5 rounded bg-slate-800 border border-slate-700 transition-all flex items-center gap-1">
+                        <i class="far fa-copy"></i> Copiar
+                    </button>
+                </div>
+                <pre class="text-slate-300 bg-slate-900/60 p-2.5 rounded border border-slate-800/80 text-[11px] leading-relaxed overflow-x-auto font-mono text-emerald-400/90">${escapeHtml(item.outputSim)}</pre>
+            `;
+
+            terminalLogs.appendChild(logEntry);
+            
+            // Auto Scroll Terminal to Bottom
+            const termScreen = document.getElementById('terminal-screen');
+            termScreen.scrollTop = termScreen.scrollHeight;
+        }
+
+        // Copy Text Helper with Direct UI Feedback
+        function copyToClipboard(text, btnElement) {
+            const performCopy = () => {
+                showToast("Comando copiado com sucesso!");
+                if (btnElement) {
+                    const originalText = btnElement.innerHTML;
+                    btnElement.innerHTML = `<i class="fas fa-check text-emerald-400"></i> Copiado!`;
+                    btnElement.classList.add('border-emerald-500', 'text-emerald-400');
+                    setTimeout(() => {
+                        btnElement.innerHTML = originalText;
+                        btnElement.classList.remove('border-emerald-500', 'text-emerald-400');
+                    }, 2000);
+                }
+            };
+
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(performCopy).catch(() => fallbackCopy(text, performCopy));
+            } else {
+                fallbackCopy(text, performCopy);
+            }
+        }
+
+        function fallbackCopy(text, callback) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                if (callback) callback();
+            } catch (err) {
+                console.error('Falha ao copiar comando', err);
+            }
+            document.body.removeChild(textArea);
+        }
+
+        // Show Toast Notification
+        function showToast(message = "Comando copiado com sucesso!") {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-message');
+            if (toastMsg) toastMsg.textContent = message;
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 2500);
+        }
+
+        // Utility: Escape HTML
+        function escapeHtml(str) {
+            return str
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // Utility: Escape JS String for Onclick
+        function escapeJsString(str) {
+            return str.replace(/'/g, "\\'").replace(/"/g, '\\"');
+        }
+    </script>
+</body>
+</html>
